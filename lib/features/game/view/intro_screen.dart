@@ -1,7 +1,9 @@
 import 'package:flash_pattern/core/constants/app_colors.dart';
+import 'package:flash_pattern/features/game/controllers/ads_controller/consent_controller.dart';
 import 'package:flash_pattern/features/game/view/game_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -22,7 +24,7 @@ class _IntroScreenState extends State<IntroScreen>
   @override
   void initState() {
     super.initState();
-
+    _initAds();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -41,6 +43,7 @@ class _IntroScreenState extends State<IntroScreen>
     Future.delayed(const Duration(milliseconds: 1500), () {
       _startTileAnimation();
     });
+
   }
 
   void _startTileAnimation() async {
@@ -64,6 +67,11 @@ class _IntroScreenState extends State<IntroScreen>
       transition: Transition.fadeIn,
       duration: const Duration(milliseconds: 600),
     );
+  }
+  Future<void> _initAds() async {
+    final consentController = Get.find<ConsentController>();
+    await consentController.initializeConsent();
+    await MobileAds.instance.initialize();
   }
 
   @override
