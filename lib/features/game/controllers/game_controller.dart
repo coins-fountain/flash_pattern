@@ -1,10 +1,13 @@
 import 'package:flash_pattern/core/constants/app_colors.dart';
 import 'package:flash_pattern/data/repositories/get_highscore.dart';
 import 'package:flash_pattern/data/repositories/save_highscore.dart';
+import 'package:flash_pattern/features/game/controllers/ads_controller/ads_controller.dart';
+import 'package:flash_pattern/features/game/controllers/ads_controller/consent_controller.dart';
 import 'package:flash_pattern/logic/game_engine.dart';
 import 'package:flash_pattern/logic/game_state.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 class GameController extends GetxController {
@@ -24,6 +27,8 @@ class GameController extends GetxController {
   var isShowingPattern = false.obs;
   var highScore = 0.obs;
   var activeIndex = Rxn<int>();
+  final AdController adController = Get.find<AdController>();
+  final ConsentController consentController = Get.find<ConsentController>();
 
   int get currentLevel => engine.level;
 
@@ -51,7 +56,15 @@ class GameController extends GetxController {
     gridSize.value = engine.gridSize;
     await _showPattern();
   }
+  Future<void> openPrivacyPolicy() async {
+    final Uri url = Uri.parse(
+      'https://coins-fountain.github.io/privacy-policy-games/',
+    );
 
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
   Future<void> _showPattern() async {
     isShowingPattern.value = true;
 
@@ -188,9 +201,13 @@ class GameController extends GetxController {
   }
 
   Future<void> _retrySameGrid() async {
-    engine.retry(); // kita bikin method ini
-    isGameStarted.value = true;
-    await _showPattern();
+    adController.showInterstitial(
+      onClosed: () async {
+        engine.retry();
+        isGameStarted.value = true;
+        await _showPattern();
+      },
+    );
   }
 
   Future<void> _restartFromBeginning() async {
