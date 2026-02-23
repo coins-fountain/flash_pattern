@@ -24,6 +24,23 @@ class GameScreen extends GetView<GameController> {
               style: const TextStyle(
                   color: AppColors.textSecondary, fontSize: 18),
             )),
+            Obx(() => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: controller.isShowingPattern.value
+                    ? Colors.orange.withOpacity(0.2)
+                    : Colors.green.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                controller.isShowingPattern.value ? "MEMORIZING..." : "YOUR TURN!",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: controller.isShowingPattern.value ? Colors.orange : Colors.green,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            )),
             const SizedBox(height: 40),
             Obx(() {
               return AspectRatio(
@@ -85,6 +102,16 @@ class GameScreen extends GetView<GameController> {
           ],
         ),
       ),
+    );
+  }
+
+
+  Widget _buildStatColumn(String label, String value) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }

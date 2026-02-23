@@ -3,7 +3,6 @@ import 'package:flash_pattern/features/game/controllers/ads_controller/consent_c
 import 'package:flash_pattern/features/game/view/game_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -71,7 +70,6 @@ class _IntroScreenState extends State<IntroScreen>
   Future<void> _initAds() async {
     final consentController = Get.find<ConsentController>();
     await consentController.initializeConsent();
-    await MobileAds.instance.initialize();
   }
 
   @override

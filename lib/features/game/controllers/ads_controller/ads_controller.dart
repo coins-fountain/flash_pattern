@@ -1,23 +1,19 @@
 import 'dart:io';
 import 'package:flash_pattern/features/game/controllers/ads_controller/consent_controller.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdController extends GetxController {
   BannerAd? bannerAd;
   var isBannerAdLoaded = false.obs;
-  final ConsentController _consentController =
-  Get.find<ConsentController>();
+  final ConsentController _consentController = Get.find<ConsentController>();
 
-  AdRequest get _adRequest => AdRequest(
-    nonPersonalizedAds:
-    !_consentController.isConsentGiven.value,
-  );
-
+  AdRequest get _adRequest =>
+      AdRequest(nonPersonalizedAds: !_consentController.isConsentGiven.value);
 
   InterstitialAd? interstitialAd;
   var isInterstitialAdLoaded = false.obs;
-
 
   RewardedAd? rewardedAd;
   var isRewardedAdLoaded = false.obs;
@@ -62,15 +58,18 @@ class AdController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadBannerAd();
-    _loadInterstitialAd();
-    _loadRewardedAd();
+    _loadInitialAds();
+
     ever(_consentController.isConsentGiven, (bool value) {
-      print("Consent changed -> Reloading ads");
       reloadAllAds();
     });
   }
 
+  void _loadInitialAds() {
+    _loadBannerAd();
+    _loadInterstitialAd();
+    _loadRewardedAd();
+  }
 
   void reloadAllAds() {
     bannerAd?.dispose();
@@ -85,8 +84,6 @@ class AdController extends GetxController {
     _loadInterstitialAd();
     _loadRewardedAd();
   }
-
-
 
   @override
   void onClose() {
@@ -115,7 +112,6 @@ class AdController extends GetxController {
     );
     bannerAd!.load();
   }
-
 
   void _loadInterstitialAd() {
     InterstitialAd.load(
@@ -175,17 +171,16 @@ class AdController extends GetxController {
   void showRewardedAd({required void Function() onRewardEarned}) {
     if (rewardedAd == null || !isRewardedAdLoaded.value) return;
 
-    rewardedAd!.fullScreenContentCallback =
-        FullScreenContentCallback(
-          onAdDismissedFullScreenContent: (ad) {
-            ad.dispose();
-            _loadRewardedAd();
-          },
-          onAdFailedToShowFullScreenContent: (ad, error) {
-            ad.dispose();
-            _loadRewardedAd();
-          },
-        );
+    rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _loadRewardedAd();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _loadRewardedAd();
+      },
+    );
 
     rewardedAd!.show(
       onUserEarnedReward: (ad, reward) {
@@ -196,34 +191,66 @@ class AdController extends GetxController {
     rewardedAd = null;
     isRewardedAdLoaded.value = false;
   }
-  void showInterstitial({void Function()? onClosed}) {
-    if (interstitialAd == null) {
-      onClosed?.call();
-      return;
-    }
 
+  void showInterstitial({void Function()? onClosed}) {
+    // Jika dalam masa cooldown (75 detik), langsung lanjut tanpa iklan
     if (!_canShowInterstitial) {
       onClosed?.call();
       return;
     }
-    interstitialAd!.fullScreenContentCallback =
-        FullScreenContentCallback(
-          onAdDismissedFullScreenContent: (ad) {
-            _lastInterstitialShown = DateTime.now();
-            ad.dispose();
-            _loadInterstitialAd();
-            onClosed?.call();
-          },
-          onAdFailedToShowFullScreenContent: (ad, error) {
-            ad.dispose();
-            _loadInterstitialAd();
-            onClosed?.call();
-          },
-        );
+
+    // Jika iklan sudah ready, langsung tampilkan
+    if (interstitialAd != null && isInterstitialAdLoaded.value) {
+      _showActualAd(onClosed);
+    } else {
+      // Jika iklan BELUM ready, kita tunggu sebentar pakai Loading Overlay
+      _waitForAdThenShow(onClosed);
+    }
+  }
+
+  // Fungsi pembantu untuk menampilkan iklan yang sudah siap
+  void _showActualAd(void Function()? onClosed) {
+    interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        _lastInterstitialShown = DateTime.now();
+        ad.dispose();
+        _loadInterstitialAd(); // Preload iklan berikutnya
+        onClosed?.call();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _loadInterstitialAd();
+        onClosed?.call();
+      },
+    );
 
     interstitialAd!.show();
     interstitialAd = null;
+    isInterstitialAdLoaded.value = false;
   }
 
+  Future<void> _waitForAdThenShow(void Function()? onClosed) async {
+    Get.dialog(
+      const Center(child: CircularProgressIndicator(color: Colors.green)),
+      barrierDismissible: false,
+    );
+    _loadInterstitialAd();
+    int attempts = 0;
+    while (interstitialAd == null && attempts < 10) {
+      await Future.delayed(const Duration(milliseconds: 200));
+      attempts++;
+    }
 
+    // Close the loading dialog
+    if (Get.isDialogOpen ?? false) {
+      Get.back();
+    }
+
+    if (interstitialAd != null && isInterstitialAdLoaded.value) {
+      _showActualAd(onClosed);
+    } else {
+      print("Iklan tidak tersedia setelah ditunggu, lanjut game...");
+      onClosed?.call();
+    }
+  }
 }
