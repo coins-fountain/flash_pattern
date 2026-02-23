@@ -85,7 +85,7 @@ class GameController extends GetxController {
     if (!isGameStarted.value ||
         isShowingPattern.value ||
         userTapIndex.value != null) {
-      print(
+      debugPrint(
         "Input ditolak: GameStarted=${isGameStarted.value}, ShowingPattern=${isShowingPattern.value}",
       );
       return;
@@ -111,7 +111,6 @@ class GameController extends GetxController {
   }
 
   Future<void> _gameOver() async {
-
     final finalScore = currentLevel;
 
     if (finalScore > highScore.value) {
@@ -125,7 +124,7 @@ class GameController extends GetxController {
   Future<void> _showGameOverDialog(int score) async {
     await Get.dialog(
       Dialog(
-        backgroundColor: AppColors.alertGameOver.withOpacity(0.90),
+        backgroundColor: AppColors.alertGameOver.withValues(alpha: 0.90),
         elevation: 10,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
@@ -183,7 +182,9 @@ class GameController extends GetxController {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         elevation: 8,
-                        shadowColor: AppColors.tileActive.withOpacity(0.5),
+                        shadowColor: AppColors.tileActive.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                       onPressed: () {
                         Get.back();

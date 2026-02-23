@@ -13,7 +13,6 @@ class IntroScreen extends StatefulWidget {
 
 class _IntroScreenState extends State<IntroScreen>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _controller;
   late Animation<double> _fade;
   late Animation<double> _scale;
@@ -29,25 +28,25 @@ class _IntroScreenState extends State<IntroScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    _fade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+    _fade = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
-    _scale = Tween<double>(begin: 0.8, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scale = Tween<double>(
+      begin: 0.8,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
 
     Future.delayed(const Duration(milliseconds: 1500), () {
       _startTileAnimation();
     });
-
   }
 
   void _startTileAnimation() async {
     while (_isAnimating && mounted) {
-
       if (!mounted) break;
       setState(() => highlight = true);
 
@@ -62,11 +61,12 @@ class _IntroScreenState extends State<IntroScreen>
 
   void _startGame() {
     Get.off(
-          () => const GameScreen(),
+      () => const GameScreen(),
       transition: Transition.fadeIn,
       duration: const Duration(milliseconds: 600),
     );
   }
+
   Future<void> _initAds() async {
     final consentController = Get.find<ConsentController>();
     await consentController.initializeConsent();
@@ -146,7 +146,9 @@ class _IntroScreenState extends State<IntroScreen>
                           borderRadius: BorderRadius.circular(14),
                         ),
                         elevation: 8,
-                        shadowColor: AppColors.tileActive.withOpacity(0.5),
+                        shadowColor: AppColors.tileActive.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                       onPressed: _startGame,
                       child: const Text(
@@ -159,7 +161,7 @@ class _IntroScreenState extends State<IntroScreen>
                         ),
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),

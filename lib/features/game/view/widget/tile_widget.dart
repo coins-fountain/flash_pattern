@@ -7,11 +7,7 @@ class GameTile extends StatefulWidget {
   final int index;
   final GameController controller;
 
-  const GameTile({
-    super.key,
-    required this.index,
-    required this.controller,
-  });
+  const GameTile({super.key, required this.index, required this.controller});
 
   @override
   State<GameTile> createState() => _GameTileState();
@@ -30,7 +26,8 @@ class _GameTileState extends State<GameTile> {
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: () => widget.controller.onTileTap(widget.index),
       child: Obx(() {
-        bool isActive = widget.controller.activeIndex.value == widget.index ||
+        bool isActive =
+            widget.controller.activeIndex.value == widget.index ||
             widget.controller.userTapIndex.value == widget.index;
 
         return AnimatedScale(
@@ -43,33 +40,39 @@ class _GameTileState extends State<GameTile> {
             decoration: BoxDecoration(
               color: isActive
                   ? AppColors.tileActive
-                  : AppColors.tileInactive.withOpacity(0.8),
-              borderRadius: BorderRadius.circular(12), // Lebih rounded lebih modern
+                  : AppColors.tileInactive.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(
+                12,
+              ), // Lebih rounded lebih modern
               border: Border.all(
                 color: isActive
-                    ? Colors.white.withOpacity(0.5)
+                    ? Colors.white.withValues(alpha: 0.5)
                     : Colors.transparent,
                 width: 2,
               ),
               boxShadow: isActive
                   ? [
-                BoxShadow(
-                  color: AppColors.tileActive.withOpacity(0.6),
-                  blurRadius: 15,
-                  spreadRadius: 1,
-                ),
-              ]
+                      BoxShadow(
+                        color: AppColors.tileActive.withValues(alpha: 0.6),
+                        blurRadius: 15,
+                        spreadRadius: 1,
+                      ),
+                    ]
                   : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
             child: Center(
               child: isActive
-                  ? Icon(Icons.flash_on, color: Colors.white.withOpacity(0.3), size: 30)
+                  ? Icon(
+                      Icons.flash_on,
+                      color: Colors.white.withValues(alpha: 0.3),
+                      size: 30,
+                    )
                   : null,
             ),
           ),

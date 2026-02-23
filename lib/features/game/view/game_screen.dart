@@ -19,28 +19,41 @@ class GameScreen extends GetView<GameController> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 8),
-            Obx(() => Text(
-              "High Score: ${controller.highScore.value}",
-              style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 18),
-            )),
-            Obx(() => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: controller.isShowingPattern.value
-                    ? Colors.orange.withOpacity(0.2)
-                    : Colors.green.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                controller.isShowingPattern.value ? "MEMORIZING..." : "YOUR TURN!",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: controller.isShowingPattern.value ? Colors.orange : Colors.green,
-                  letterSpacing: 1.2,
+            Obx(
+              () => Text(
+                "High Score: ${controller.highScore.value}",
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 18,
                 ),
               ),
-            )),
+            ),
+            Obx(
+              () => Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: controller.isShowingPattern.value
+                      ? Colors.orange.withValues(alpha: 0.2)
+                      : Colors.green.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  controller.isShowingPattern.value
+                      ? "MEMORIZING..."
+                      : "YOUR TURN!",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: controller.isShowingPattern.value
+                        ? Colors.orange
+                        : Colors.green,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 40),
             Obx(() {
               return AspectRatio(
@@ -48,17 +61,15 @@ class GameScreen extends GetView<GameController> {
                 child: GridView.builder(
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: controller.gridSize.value *  controller.gridSize.value,
+                  itemCount:
+                      controller.gridSize.value * controller.gridSize.value,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: controller.gridSize.value,
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
                   ),
                   itemBuilder: (context, index) {
-                    return GameTile(
-                      index: index,
-                      controller: controller,
-                    );
+                    return GameTile(index: index, controller: controller);
                   },
                 ),
               );
@@ -79,7 +90,7 @@ class GameScreen extends GetView<GameController> {
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         decoration: TextDecoration.underline,
-                        decorationColor:AppColors.textPrimary
+                        decorationColor: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -92,7 +103,7 @@ class GameScreen extends GetView<GameController> {
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         decoration: TextDecoration.underline,
-                          decorationColor:AppColors.textPrimary
+                        decorationColor: AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -102,16 +113,6 @@ class GameScreen extends GetView<GameController> {
           ],
         ),
       ),
-    );
-  }
-
-
-  Widget _buildStatColumn(String label, String value) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-      ],
     );
   }
 }

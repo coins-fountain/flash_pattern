@@ -249,7 +249,7 @@ class AdController extends GetxController {
     if (interstitialAd != null && isInterstitialAdLoaded.value) {
       _showActualAd(onClosed);
     } else {
-      print("Iklan tidak tersedia setelah ditunggu, lanjut game...");
+      debugPrint("Iklan tidak tersedia setelah ditunggu, lanjut game...");
       onClosed?.call();
     }
   }
