@@ -12,20 +12,14 @@ import 'package:get/get.dart';
 class GameBinding extends Bindings {
   @override
   void dependencies() {
-    // 1. Core Services (Early registration)
     Get.put(ConsentService(), permanent: true);
     Get.put(AdService(), permanent: true);
 
-    // 2. Data & Repositories
     final prefs = Get.put(Preferences());
     final repository = Get.put<ScoreRepository>(ScoreRepositoryImpl(prefs));
     final getHighScore = Get.put(GetHighScore(repository));
     final saveHighScore = Get.put(SaveHighScore(repository));
-
-    // 3. Logic & Engine
     final engine = Get.put(GameEngine());
-
-    // 4. Main Controller
     Get.put(
       GameController(
         engine: engine,

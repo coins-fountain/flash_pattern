@@ -9,10 +9,8 @@ void main() async {
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  // Run the app first so the user sees the UI immediately.
   runApp(const MyApp());
 
-  // Initialize background services (Consent & Ads) via GameBinding/AdService
 }
 
 class MyApp extends StatelessWidget {
