@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flash_pattern/logic/game_state.dart';
+import 'package:flash_pattern/core/logic/game_state.dart';
 
 class GameEngine {
   final List<int> _pattern = [];

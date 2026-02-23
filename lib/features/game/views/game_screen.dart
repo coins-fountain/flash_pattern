@@ -1,7 +1,7 @@
 import 'package:flash_pattern/core/constants/app_colors.dart';
-import 'package:flash_pattern/features/game/controllers/ads_controller/consent_controller.dart';
+import 'package:flash_pattern/core/services/consent_service.dart';
 import 'package:flash_pattern/features/game/controllers/game_controller.dart';
-import 'package:flash_pattern/features/game/view/widget/tile_widget.dart';
+import 'package:flash_pattern/features/game/views/widgets/tile_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,7 +10,7 @@ class GameScreen extends GetView<GameController> {
 
   @override
   Widget build(BuildContext context) {
-    final consentController = Get.find<ConsentController>();
+    final consentService = Get.find<ConsentService>();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -18,6 +18,19 @@ class GameScreen extends GetView<GameController> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const SizedBox(height: 8),
+            Obx(
+              () => Text(
+                "Level: ${controller.score.value}",
+                style: TextStyle(
+                  color: controller.score.value > controller.highScore.value
+                      ? AppColors.tileActive
+                      : AppColors.textPrimary,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
             const SizedBox(height: 8),
             Obx(
               () => Text(
@@ -75,7 +88,7 @@ class GameScreen extends GetView<GameController> {
               );
             }),
             Obx(() {
-              if (!consentController.isRequestLocationInEeaOrUk.value) {
+              if (!consentService.isRequestLocationInEeaOrUk.value) {
                 return const SizedBox();
               }
               return Column(
@@ -83,7 +96,7 @@ class GameScreen extends GetView<GameController> {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () async {
-                      await consentController.showPrivacyOptions();
+                      await consentService.showPrivacyOptions();
                     },
                     child: const Text(
                       "Privacy Settings Ads",

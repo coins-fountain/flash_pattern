@@ -1,25 +1,26 @@
-import 'dart:io';
-import 'package:flash_pattern/features/game/controllers/ads_controller/consent_controller.dart';
+import 'package:flash_pattern/core/services/consent_service.dart';
+import 'package:flash_pattern/core/utils/ad_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-class AdController extends GetxController {
+class AdService extends GetxService {
   BannerAd? bannerAd;
   var isBannerAdLoaded = false.obs;
-  final ConsentController _consentController = Get.find<ConsentController>();
+  final ConsentService _consentService = Get.find<ConsentService>();
 
   AdRequest get _adRequest =>
-      AdRequest(nonPersonalizedAds: !_consentController.isConsentGiven.value);
+      AdRequest(nonPersonalizedAds: !_consentService.isConsentGiven.value);
 
   InterstitialAd? interstitialAd;
   var isInterstitialAdLoaded = false.obs;
+  bool isInterstitialLoading = false; // Add this to prevent redundant loads
 
   RewardedAd? rewardedAd;
   var isRewardedAdLoaded = false.obs;
 
   DateTime? _lastInterstitialShown;
-  final Duration _interstitialCooldown = const Duration(seconds: 75);
+  final Duration _interstitialCooldown = const Duration(minutes: 1);
 
   bool get _canShowInterstitial {
     if (_lastInterstitialShown == null) return true;
@@ -28,41 +29,32 @@ class AdController extends GetxController {
     return diff >= _interstitialCooldown;
   }
 
-  String get bannerAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/6300978111';
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/2934735716';
-    }
-    return '';
-  }
-
-  String get interstitialAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/1033173712';
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/4411468910';
-    }
-    return '';
-  }
-
-  String get rewardedAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/5224354917';
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/1712485313';
-    }
-    return '';
-  }
-
   @override
   void onInit() {
     super.onInit();
-    _loadInitialAds();
+    _initializeAndLoad();
 
-    ever(_consentController.isConsentGiven, (bool value) {
+    ever(_consentService.isConsentGiven, (bool value) {
       reloadAllAds();
     });
+  }
+
+  Future<void> _initializeAndLoad() async {
+    try {
+      await _consentService.initializeConsent();
+
+      await MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(
+          maxAdContentRating: MaxAdContentRating.g,
+          testDeviceIds: [],
+        ),
+      );
+
+      await MobileAds.instance.initialize();
+      _loadInitialAds();
+    } catch (e) {
+      debugPrint("Error during AdService initialization: $e");
+    }
   }
 
   void _loadInitialAds() {
@@ -95,7 +87,7 @@ class AdController extends GetxController {
 
   void _loadBannerAd() {
     bannerAd = BannerAd(
-      adUnitId: bannerAdUnitId,
+      adUnitId: AdHelper.bannerAdUnitId,
       size: AdSize.banner,
       request: _adRequest,
       listener: BannerAdListener(
@@ -103,9 +95,9 @@ class AdController extends GetxController {
           isBannerAdLoaded.value = true;
         },
         onAdFailedToLoad: (ad, error) {
+          debugPrint("Banner Ad failed to load: ${error.message}");
           ad.dispose();
           isBannerAdLoaded.value = false;
-          // Retry loading after a delay
           Future.delayed(const Duration(seconds: 30), _loadBannerAd);
         },
       ),
@@ -114,28 +106,34 @@ class AdController extends GetxController {
   }
 
   void _loadInterstitialAd() {
+    if (isInterstitialLoading) return;
+
+    isInterstitialLoading = true;
     InterstitialAd.load(
-      adUnitId: interstitialAdUnitId,
+      adUnitId: AdHelper.interstitialAdUnitId,
       request: _adRequest,
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           interstitialAd = ad;
           isInterstitialAdLoaded.value = true;
+          isInterstitialLoading = false;
 
           interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
             onAdDismissedFullScreenContent: (ad) {
               ad.dispose();
-              _loadInterstitialAd(); // Preload next ad
+              _loadInterstitialAd();
             },
             onAdFailedToShowFullScreenContent: (ad, error) {
+              debugPrint("Interstitial Ad failed to show: ${error.message}");
               ad.dispose();
               _loadInterstitialAd();
             },
           );
         },
         onAdFailedToLoad: (error) {
+          debugPrint("Interstitial Ad failed to load: ${error.message}");
           isInterstitialAdLoaded.value = false;
-          // Retry loading after a delay
+          isInterstitialLoading = false;
           Future.delayed(const Duration(seconds: 30), _loadInterstitialAd);
         },
       ),
@@ -144,7 +142,7 @@ class AdController extends GetxController {
 
   void _loadRewardedAd() {
     RewardedAd.load(
-      adUnitId: rewardedAdUnitId,
+      adUnitId: AdHelper.rewardedAdUnitId,
       request: _adRequest,
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
@@ -152,69 +150,33 @@ class AdController extends GetxController {
           isRewardedAdLoaded.value = true;
         },
         onAdFailedToLoad: (error) {
+          debugPrint("Rewarded Ad failed to load: ${error.message}");
           isRewardedAdLoaded.value = false;
-          // Retry loading after a delay
           Future.delayed(const Duration(seconds: 30), _loadRewardedAd);
         },
       ),
     );
   }
 
-  void showInterstitialAd() {
-    if (interstitialAd != null && isInterstitialAdLoaded.value) {
-      interstitialAd!.show();
-      interstitialAd = null;
-      isInterstitialAdLoaded.value = false;
-    }
-  }
-
-  void showRewardedAd({required void Function() onRewardEarned}) {
-    if (rewardedAd == null || !isRewardedAdLoaded.value) return;
-
-    rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (ad) {
-        ad.dispose();
-        _loadRewardedAd();
-      },
-      onAdFailedToShowFullScreenContent: (ad, error) {
-        ad.dispose();
-        _loadRewardedAd();
-      },
-    );
-
-    rewardedAd!.show(
-      onUserEarnedReward: (ad, reward) {
-        onRewardEarned();
-      },
-    );
-
-    rewardedAd = null;
-    isRewardedAdLoaded.value = false;
-  }
-
   void showInterstitial({void Function()? onClosed}) {
-    // Jika dalam masa cooldown (75 detik), langsung lanjut tanpa iklan
     if (!_canShowInterstitial) {
       onClosed?.call();
       return;
     }
 
-    // Jika iklan sudah ready, langsung tampilkan
     if (interstitialAd != null && isInterstitialAdLoaded.value) {
       _showActualAd(onClosed);
     } else {
-      // Jika iklan BELUM ready, kita tunggu sebentar pakai Loading Overlay
       _waitForAdThenShow(onClosed);
     }
   }
 
-  // Fungsi pembantu untuk menampilkan iklan yang sudah siap
   void _showActualAd(void Function()? onClosed) {
     interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (ad) {
         _lastInterstitialShown = DateTime.now();
         ad.dispose();
-        _loadInterstitialAd(); // Preload iklan berikutnya
+        _loadInterstitialAd();
         onClosed?.call();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
@@ -234,14 +196,16 @@ class AdController extends GetxController {
       const Center(child: CircularProgressIndicator(color: Colors.green)),
       barrierDismissible: false,
     );
-    _loadInterstitialAd();
+
+    _loadInterstitialAd(); // Will return early if already loading
+
     int attempts = 0;
-    while (interstitialAd == null && attempts < 10) {
+    // Wait up to 5 seconds
+    while (interstitialAd == null && attempts < 25) {
       await Future.delayed(const Duration(milliseconds: 200));
       attempts++;
     }
 
-    // Close the loading dialog
     if (Get.isDialogOpen ?? false) {
       Get.back();
     }
@@ -249,8 +213,40 @@ class AdController extends GetxController {
     if (interstitialAd != null && isInterstitialAdLoaded.value) {
       _showActualAd(onClosed);
     } else {
-      debugPrint("Iklan tidak tersedia setelah ditunggu, lanjut game...");
       onClosed?.call();
     }
+  }
+
+  void showRewardedAd({
+    required void Function() onRewardEarned,
+    void Function()? onAdDismissed,
+    void Function()? onAdFailed,
+  }) {
+    if (rewardedAd == null || !isRewardedAdLoaded.value) {
+      onAdFailed?.call();
+      return;
+    }
+
+    rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        _loadRewardedAd();
+        onAdDismissed?.call();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _loadRewardedAd();
+        onAdFailed?.call();
+      },
+    );
+
+    rewardedAd!.show(
+      onUserEarnedReward: (ad, reward) {
+        onRewardEarned();
+      },
+    );
+
+    rewardedAd = null;
+    isRewardedAdLoaded.value = false;
   }
 }
