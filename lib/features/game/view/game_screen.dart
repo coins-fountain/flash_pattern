@@ -44,13 +44,6 @@ class GameScreen extends GetView<GameController> {
                 ),
               );
             }),
-            const SizedBox(height: 40),
-            Obx(() => !controller.isGameStarted.value
-                ? ElevatedButton(
-              onPressed: controller.startGame,
-              child: const Text("Start Game"),
-            )
-                : const SizedBox())
           ],
         ),
       ),

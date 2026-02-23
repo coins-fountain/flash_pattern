@@ -1,4 +1,4 @@
-import 'package:flash_pattern/features/game/view/game_screen.dart';
+import 'package:flash_pattern/features/game/view/intro_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'features/game/bindings/game_bindings.dart';
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       initialBinding: GameBinding(),
-      home: GameScreen(),
+      home: const IntroScreen(),
     );
   }
 }

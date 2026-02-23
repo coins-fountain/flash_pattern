@@ -1,7 +1,9 @@
+import 'package:flash_pattern/core/constants/app_colors.dart';
 import 'package:flash_pattern/data/repositories/get_highscore.dart';
 import 'package:flash_pattern/data/repositories/save_highscore.dart';
 import 'package:flash_pattern/logic/game_engine.dart';
 import 'package:flash_pattern/logic/game_state.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 
@@ -29,12 +31,14 @@ class GameController extends GetxController {
   void onInit() {
     super.onInit();
     _loadHighScore();
+    Future.delayed(const Duration(milliseconds: 300), () {
+      startGame();
+    });
   }
 
   Future<void> _loadHighScore() async {
     highScore.value = await getHighScore();
   }
-
   Future<void> startGame() async {
     engine.start();
     gridSize.value = engine.gridSize;
@@ -53,9 +57,6 @@ class GameController extends GetxController {
 
     for (final index in engine.pattern) {
       activeIndex.value = index;
-
-      print("engine dellay " + engine.currentDelay.toInt().toString());
-
       await Future.delayed(
         Duration(milliseconds: engine.currentDelay.toInt()),
       );
@@ -66,7 +67,6 @@ class GameController extends GetxController {
         Duration(milliseconds: engine.currentDelay.toInt()),
       );
     }
-
     isShowingPattern.value = false;
   }
 
@@ -89,15 +89,113 @@ class GameController extends GetxController {
         break;
     }
   }
-
   Future<void> _gameOver() async {
     isGameStarted.value = false;
 
-    if (currentLevel > highScore.value) {
-      highScore.value = currentLevel;
-      await saveHighScore(currentLevel);
+    final finalScore = currentLevel;
+
+    if (finalScore > highScore.value) {
+      highScore.value = finalScore;
+      await saveHighScore(finalScore);
     }
+
+    await _showGameOverDialog(finalScore);
+  }
+  Future<void> _showGameOverDialog(int score) async {
+    await Get.dialog(
+      Dialog(
+        backgroundColor:
+        AppColors.alertGameOver.withOpacity(0.90),
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Game Over",
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Score: $score",
+                style: const TextStyle(fontSize: 18, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: AppColors.tileActive,
+                          width: 2,
+                        ),
+                        foregroundColor: AppColors.tileActive,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Get.back();
+                        _retrySameGrid();
+                      },
+                      child: const Text(
+                        "Try Again",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.tileActive,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 8,
+                        shadowColor: AppColors.tileActive.withOpacity(0.5),
+                      ),
+                      onPressed: () {
+                        Get.back();
+                        _restartFromBeginning();
+                      },
+                      child: const Text(
+                        "New Game",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    )
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  Future<void> _retrySameGrid() async {
+    engine.retry(); // kita bikin method ini
+    isGameStarted.value = true;
+    await _showPattern();
+  }
+
+  Future<void> _restartFromBeginning() async {
+    engine.reset(); // reset level + grid
     gridSize.value = engine.gridSize;
-    engine.reset();
+    await startGame();
   }
 }

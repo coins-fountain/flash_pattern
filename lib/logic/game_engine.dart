@@ -1,5 +1,6 @@
 import 'dart:math';
-import '../../logic/game_state.dart';
+
+import 'package:flash_pattern/logic/game_state.dart';
 
 class GameEngine {
   final List<int> _pattern = [];
@@ -16,7 +17,8 @@ class GameEngine {
 
   List<int> get pattern => List.unmodifiable(_pattern);
 
-  double get currentDelay => (_baseDelay - level * 20).clamp(_minDelay, _baseDelay);
+  double get currentDelay =>
+      (_baseDelay - level * 20).clamp(_minDelay, _baseDelay);
 
   void start() {
     _pattern.clear();
@@ -31,6 +33,10 @@ class GameEngine {
 
   void reset() {
     _pattern.clear();
+    _userInput.clear();
+  }
+
+  void retry() {
     _userInput.clear();
   }
 
