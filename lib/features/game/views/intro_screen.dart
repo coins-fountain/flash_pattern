@@ -123,9 +123,9 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
                           ),
                         );
                       }),
-                      SizedBox(height: 10,),
+                      SizedBox(height: 10),
                       Expanded(child: _demoGrid()),
-                      SizedBox(height: 10,),
+                      SizedBox(height: 10),
                       const Text(
                         "Memorize the green tile.\nRepeat the pattern.",
                         textAlign: TextAlign.center,
@@ -158,7 +158,7 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
                           ),
                         ),
                       ),
-                      SizedBox(height: 60,)
+                      SizedBox(height: 60),
                     ],
                   ),
                 ),
